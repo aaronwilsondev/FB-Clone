@@ -1,8 +1,10 @@
+const { validateEmail, validateLength } = require("../helpers/validation");
 const User = require("../models/User");
+const bcrypt = require("bcrypt");
+
+//register a new user
 
 exports.register = async (req, res) => {
-  console.log(req.body);
-
   try {
     const {
       first_name,
@@ -15,6 +17,40 @@ exports.register = async (req, res) => {
       bDay,
       gender,
     } = req.body;
+
+    if (!validateEmail(email)) {
+      return res.status(400).json({
+        message: "invalid email",
+      });
+    }
+
+    const check = await User.findOne({ email });
+    if (check) {
+      return res.status(400).json({
+        message: "an account with this email already exists",
+      });
+    }
+
+    if (!validateLength(first_name, 2, 30)) {
+      return res.status(400).json({
+        message: "First name must be between 3 and 30 characters",
+      });
+    }
+
+    if (!validateLength(last_name, 2, 30)) {
+      return res.status(400).json({
+        message: "Last name must be between 3 and 30 characters",
+      });
+    }
+
+    if (!validateLength(password, 5, 40)) {
+      return res.status(400).json({
+        message: "Password name must be between 5 and 40 characters",
+      });
+    }
+
+    const cryptedPassword = await bcrypt.hash(password, 12);
+
     const user = await new User({
       first_name,
       last_name,
