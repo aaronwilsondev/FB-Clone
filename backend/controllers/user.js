@@ -97,13 +97,39 @@ exports.register = async (req, res) => {
 };
 
 exports.activateAccount = async (req, res) => {
-  const { token } = req.body;
-  const user = jwt.verify(token, process.env.TOKEN_SECRET);
-  const check = User.findById(user.id);
-  if (check.verfied == true) {
-    return res.status(400).json({ message: "this email is already activated" });
-  } else {
-    await User.findByIdAndUpdate(user.id, { verified: true });
-    return res.status(200).json({ message: "Account has been activated" });
+  try {
+    const { token } = req.body;
+    const user = jwt.verify(token, process.env.TOKEN_SECRET);
+    const check = User.findById(user.id);
+    if (check.verfied == true) {
+      return res
+        .status(400)
+        .json({ message: "this email is already activated" });
+    } else {
+      await User.findByIdAndUpdate(user.id, { verified: true });
+      return res.status(200).json({ message: "Account has been activated" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({
+        message: "this email address is not connected to an account",
+      });
+    }
+    const check = await bcrypt.compare(password, user.password);
+    if (!check) {
+      return res.status(400).json({
+        message: "Invalid credentails, please try again",
+      });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
